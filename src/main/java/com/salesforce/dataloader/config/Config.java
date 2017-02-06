@@ -778,7 +778,27 @@ public class Config {
             dirty = true;
         }
     }
-
+    
+    public void deleteValue(String name){
+    	properties.remove(name);
+    }
+    public Map<String,Map<String,String>> getAllUsers(){
+    	Set<Object> names = properties.keySet();
+    	Map<String,Map<String,String>> rs = new HashMap<String,Map<String,String>>();
+    	names.stream().forEach(s ->{
+    		if(s.toString().startsWith("user.")){
+    			String sname = s.toString();
+    			String name = sname.substring(sname.indexOf(".")+1);
+    			try {
+					rs.put(name,getMap(sname) );
+				} catch (ParameterLoadException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+    		}
+    	});
+    	return rs;
+    }
     /**
      * Saves the preferences to the file from which they were originally loaded.
      *

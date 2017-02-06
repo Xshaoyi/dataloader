@@ -29,6 +29,7 @@ package com.salesforce.dataloader.ui;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CCombo;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -158,7 +159,18 @@ public class Grid12 {
 
         return combo;
     }
+    
+    public Combo createComboEditable(int columns, int style, ArrayList<String> labels) {
+        Combo combo = new Combo(composite, style);
+        combo.setLayoutData(createCell(columns,SWT.FILL));
+        for (String label: labels) {
+            combo.add(label);
+        }
+        applyFormatting(combo);
 
+        return combo;
+    }
+    
     public void hide(Control control) {
         control.setVisible(false);
         ((GridData) control.getLayoutData()).exclude = true;

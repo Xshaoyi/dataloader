@@ -28,7 +28,17 @@ package com.salesforce.dataloader.ui;
 
 import com.salesforce.dataloader.config.Config;
 import com.salesforce.dataloader.model.LoginCriteria;
+
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.util.ArrayList;
+import java.util.Map;
+
+import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.CCombo;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.widgets.*;
 
 /**
@@ -38,11 +48,15 @@ public class LoginStandardControl extends Composite {
 
     private final Grid12 grid;
     private final Button loginButton;
+    private final Button addButton;
+    private final Button removeButton;
     private final Text userName;
+    private final CCombo users;
     private final Text password;
     private final Text instanceUrl;
     private final AuthenticationRunner authentication;
     private final Label loginLabel;
+    private Map<String,Map<String,String>> userMap;
 
     public LoginStandardControl(Composite parent, int style, AuthenticationRunner authentication) {
         super(parent, style);
@@ -50,8 +64,35 @@ public class LoginStandardControl extends Composite {
         grid = new Grid12(this, 40, 20);
 
         grid.createLabel(4, Labels.getString("SettingsPage.username"));
+        ArrayList<String> s = new ArrayList<String>();
+        userMap = authentication.getConfig().getAllUsers();
+        if(userMap!=null){
+        	s.addAll(userMap.keySet());
+        }
         userName = grid.createText(6, SWT.BORDER | SWT.FILL, authentication.getConfig().getString(Config.USERNAME));
-        grid.createPadding(2);
+        users = grid.createCombo(2,  SWT.FILL|SWT.BORDER, s);
+
+        users.addSelectionListener(new SelectionListener() {
+			
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				String name = users.getText();
+				Map<String,String> anUser = userMap.get(name);
+				if(anUser!=null){
+					userName.setText(anUser.get("un"));
+					password.setText(anUser.get("pw"));
+					instanceUrl.setText(anUser.get("url"));
+				}
+			}
+			
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+        //grid.createPadding(2);
 
         grid.createLabel(4, Labels.getString("SettingsPage.password"));
         password = grid.createText(6, SWT.PASSWORD | SWT.BORDER, "");
@@ -61,9 +102,13 @@ public class LoginStandardControl extends Composite {
         instanceUrl = grid.createText(6, SWT.BORDER, authentication.getConfig().getString(Config.ENDPOINT));
         grid.createPadding(2);
 
-        loginLabel = grid.createLabel(8, "");
+        loginLabel = grid.createLabel(4, "");
         loginButton = grid.createButton(2, SWT.PUSH | SWT.FILL | SWT.FLAT, Labels.getString("SettingsPage.login"));
+        addButton = grid.createButton(2, SWT.PUSH | SWT.FILL | SWT.FLAT, "Add User");
+        removeButton = grid.createButton(2, SWT.PUSH | SWT.FILL | SWT.FLAT, "remove User");
         loginButton.addListener(SWT.Selection, this::loginButton_Clicked);
+        addButton.addListener(SWT.Selection, this::addUserButton_Clicked);   
+        removeButton.addListener(SWT.Selection, this::removeButton_Clicked);   
         grid.createPadding(2);
     }
 
@@ -73,5 +118,47 @@ public class LoginStandardControl extends Composite {
         criteria.setUserName(userName.getText());
         criteria.setPassword(password.getText());
         authentication.login(criteria, loginLabel::setText);
+    }
+    
+    private void removeButton_Clicked(Event event) {
+    	userName.setText("");
+		password.setText("");
+		instanceUrl.setText("");
+		String nameToRemove = users.getText();
+		users.remove(nameToRemove);
+		users.setText("");
+		authentication.getConfig().deleteValue("user."+nameToRemove);
+		try {
+			authentication.getConfig().save();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (GeneralSecurityException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    }
+    
+    public void addUserButton_Clicked(Event event){
+    	String loginDetail = "un="+userName.getText()+",pw="+password.getText()+",url="+instanceUrl.getText();
+    	InputDialog dialog = new InputDialog(this.getShell(), "add user", "please input a name", "1", null);
+    	String name = "user.";
+    	if (dialog.open() == InputDialog.OK) {
+    		name += dialog.getValue();
+    	}
+    	users.add(name.substring(name.indexOf(".")+1), 0);
+    	users.select(0);
+    	authentication.getConfig().setValue(name, loginDetail);
+    	try {
+			authentication.getConfig().save();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (GeneralSecurityException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	
+    	
     }
 }

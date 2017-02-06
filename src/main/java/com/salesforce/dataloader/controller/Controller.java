@@ -44,6 +44,7 @@ import com.salesforce.dataloader.dao.DataAccessObject;
 import com.salesforce.dataloader.dao.DataAccessObjectFactory;
 import com.salesforce.dataloader.exception.*;
 import com.salesforce.dataloader.mapping.*;
+import com.salesforce.dataloader.ui.Labels;
 import com.salesforce.dataloader.ui.LoaderWindow;
 import com.sforce.soap.partner.DescribeGlobalSObjectResult;
 import com.sforce.soap.partner.DescribeSObjectResult;
@@ -165,7 +166,16 @@ public class Controller {
     }
 
     public boolean login() throws ConnectionException {
-        return login(getClient());
+    	try{
+    		boolean rs = login(getClient());
+    		if(rs){
+    			LoaderWindow.getApp().getShell().setText(config.getString(Config.USERNAME));
+    		}
+    		return rs;
+    	}catch (ConnectionException e) {
+			// TODO: handle exception
+    		throw e;
+		}
     }
 
     private boolean login(ClientBase<?> clientToLogin) throws ConnectionException {
@@ -523,6 +533,7 @@ public class Controller {
         if (this.partnerClient != null) this.partnerClient.logout();
         this.bulkClient = null;
         this.partnerClient = null;
+        LoaderWindow.getApp().getShell().setText(Labels.getString("LoaderWindow.title"));
     }
 
     public boolean attachmentsEnabled() {

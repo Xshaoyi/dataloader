@@ -374,6 +374,7 @@
             <artifactId>maven-license-plugin</artifactId>
             <version>1.8.0</version>
             <configuration>
+            	<skip>true</skip> 
                 <header>license.txt</header>
                 <excludes>
                     <exclude>**/*.bat</exclude>
